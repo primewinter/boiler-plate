@@ -4,7 +4,7 @@ const port = 5000
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { User } = require('./models/User');
-
+const { auth } = require('./middleware/auth');
 const config = require('./config/key');
 
 //application/x-www-form-urlencoded
@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
   res.send('Hello World! 안녕하세요~ ㅋㅋㅋ')
 })
 
-app.post('/register', (req,res)=> {
+app.post('/api/user/register', (req,res)=> {
   console.log('register...')
   // 회원가입 할 때 필요한 정보들을 client에서 가져오면
   // 그것들을 데이터 베이스에 넣어준다.
@@ -38,10 +38,11 @@ app.post('/register', (req,res)=> {
   })
 })
 
-app.post('/login', (req, res) => {
+app.post('/api/user/login', (req, res) => {
   console.log('login...');
   // 요청된 이메일을 데이터베이스에서 있는지 조회
   User.findOne({ email: req.body.email }, (err, user)=>{
+    if(err) return res.status(400).send(err);
     if(!user) {
       return res.json({
         loginSuccess: false,
@@ -64,6 +65,38 @@ app.post('/login', (req, res) => {
     })
   })
 })
+
+
+
+//Auth Router
+// role ==  0 -> 일반유저 , role != 0 -> 관리자
+app.get('/api/user/auth', auth , (req, res) => {
+
+  //여기까지 미들웨어를 통과해 왔다는 얘기는 Authentication이 True라는 뜻
+  req.status(200).json({
+    _id: req.user._id,
+    isAdmin: req.user.role === 0 ? false : true,
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
+    lastname: req.user.lastname,
+    role: req.user.role,
+    image: req.user.image
+  })
+})
+
+// logout Router
+app.get('/api/user/logout', auth, (req, res)=>{
+  User.findOneAndUpdate({_id: req.user._id}, 
+    { token: "" }
+    , (err, user)=> {
+      if(err) return res.json({success: false, err});
+      return res.status(200).send({
+        success:true
+      })
+    })
+})
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
