@@ -1,16 +1,24 @@
 const express = require('express')
 const app = express()
-const port = 5000
 const bodyParser = require('body-parser');
+const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const { User } = require('./models/User');
 const { auth } = require('./middleware/auth');
 const config = require('./config/key');
 
+const cors_origin = [`http://localhost:3000`];
+
 //application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 app.use(cookieParser());
+//app cors
+app.use(cors({
+  origin: cors_origin, // 허락하고자 하는 요청 주소
+  credentials: true // true로 하면 설정한 내용을 response 헤더에 추가 해줍니다.
+
+}))
 
 //application/json
 const mongoose = require('mongoose')
@@ -20,7 +28,11 @@ mongoose.connect(config.mongoURI, {
   .catch(err=> console.log(err))
 
 app.get('/', (req, res) => {
-  res.send('Hello World! 안녕하세요~ ㅋㅋㅋ')
+  res.send('Hello World! hihihihihih ㅋㅋㅋ')
+})
+
+app.get('/api/hello', (req, res)=> {
+  res.send("안녕하세요 *^^*");
 })
 
 app.post('/api/user/register', (req,res)=> {
@@ -97,7 +109,7 @@ app.get('/api/user/logout', auth, (req, res)=>{
     })
 })
 
-
+const port = 5000
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
