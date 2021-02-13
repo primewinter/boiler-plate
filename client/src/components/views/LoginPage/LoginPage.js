@@ -28,13 +28,17 @@ function LoginPage(props) {
        dispatch(loginUser(body))
         .then(response=> {
             if(response.payload.loginSuccess) {
-                alert('어서오세요');
-                props.history.push('/');
+                props.history.push('/list');
             } else {
-                alert('Error');
+                alert('일치하는 회원이 없습니다.');
             }
         })
 
+    }
+    const onRegisterHandler = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        props.history.push('/register');
     }
 
     return (
@@ -53,6 +57,9 @@ function LoginPage(props) {
                 <br/>
                 <button>
                     로그인
+                </button>
+                <button onClick={onRegisterHandler}>
+                    회원가입
                 </button>
             </form>
         </div>

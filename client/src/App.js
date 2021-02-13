@@ -5,10 +5,12 @@ import {
   Route,
   Link,
 } from "react-router-dom";
-
 import LandingPage from "./components/views/LandingPage/LandingPage";
 import LoginPage from "./components/views/LoginPage/LoginPage";
 import RegisterPage from "./components/views/RegisterPage/RegisterPage";
+import RoomList from "./components/views/Room/RoomList";
+import CreatePage from "./components/views/Room/CreatePage";
+import Room from "./components/views/Room/Room";
 import NavBar from "./components/views/NavBar/NavBar";
 import Auth from './hoc/auth';
 
@@ -27,6 +29,9 @@ function App() {
           <Route exact path="/start" component={LandingPage}/>
           <Route exact path="/"  component={LoginPage}/>
           <Route exact path="/register" component={RegisterPage}/>
+          <Route exact path="/list" component={RoomList}/>
+          <Route exact path="/create" component={CreatePage}/>
+          <Route exact path="/join" component={Room}/>
         </Switch>
       </div>
     </Router>

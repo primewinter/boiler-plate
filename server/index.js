@@ -4,8 +4,19 @@ const bodyParser = require('body-parser');
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const { User } = require('./models/User');
+const { Room } = require('./models/Room');
+const { Chat } = require('./models/Chat');
 const { auth } = require('./middleware/auth');
+const SocketEvents = require('./socket/socket');
 const config = require('./config/key');
+const server = require('http').createServer(app);
+const socket = require('socket.io');
+const io = socket(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    credentials: true
+  }
+});
 
 const cors_origin = [`http://localhost:3000`];
 
@@ -25,6 +36,7 @@ mongoose.connect(config.mongoURI, {
   useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false
 }).then(()=> console.log('MongoDB Connected...'))
   .catch(err=> console.log(err))
+
 
 app.get('/', (req, res) => {
   res.send('Hello World! hihihihihih ㅋㅋㅋ')
@@ -63,7 +75,6 @@ app.post('/api/user/login', (req, res) => {
     }
     // 요청된 이메일이 데이터 베이스에 있다면 비밀번호가 맞는지 확인
     user.comparePassword(req.body.password, (err,isMatch)=>{
-      console.log('isMatch', isMatch);
       if(!isMatch)
       return res.json({loginSuccess: false, message:"비밀번호가 틀렸습니다."})
     })
@@ -84,7 +95,38 @@ app.post('/api/user/login', (req, res) => {
   })
 })
 
+app.get('/api/room/list', (req, res) => {
+  console.log('list...');
+  Room.find((err, room)=>{
+    if(err) return res.status(400).send(err);
+    res.status(200).send(room);
+  })
+})
 
+app.post('/api/room/create', (req,res)=> {
+  console.log('create...')
+
+  const room = new Room(req.body)
+  room.save((err, roomInfo) => {
+    console.log('room save...',err,roomInfo);
+    if(err) return res.json({success:false, err})
+    return res.status(200).json({
+      success:true
+    })
+  })
+})
+
+app.post('/api/room/join', (req,res)=> {
+  console.log('join...')
+  console.log(req.body.room_id)
+
+  Chat.find({room_id:req.body.room_id},(err, chats) => {
+    console.log('room find...', req.body.room_id);
+    if(err) return res.json({success:false, err})
+    return res.status(200).json(chats)
+  });
+  
+})
 
 //Auth Router
 // role ==  0 -> 일반유저 , role != 0 -> 관리자
@@ -115,6 +157,18 @@ app.get('/api/user/logout', auth, (req, res)=>{
 })
 
 const port = 5000
-app.listen(port, () => {
+
+server.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
+
+io.sockets.on('connection', (socket)=>{
+  console.log('user connection...');
+  socket.on('send', (data)=>{
+    console.log('전달된 메시지: '+data.msg);
+  })
+
+  socket.on('disconnect', ()=>{
+    console.log('접속 종료');
+  })
+});
