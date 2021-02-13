@@ -9,16 +9,15 @@ const config = require('./config/key');
 
 const cors_origin = [`http://localhost:3000`];
 
-//application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({extended:true}));
-app.use(bodyParser.json());
 app.use(cookieParser());
 //app cors
 app.use(cors({
   origin: cors_origin, // 허락하고자 하는 요청 주소
   credentials: true // true로 하면 설정한 내용을 response 헤더에 추가 해줍니다.
-
 }))
+//application/x-www-form-urlencoded
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:true}));
 
 //application/json
 const mongoose = require('mongoose')
@@ -51,29 +50,36 @@ app.post('/api/user/register', (req,res)=> {
 })
 
 app.post('/api/user/login', (req, res) => {
-  console.log('login...');
-  // 요청된 이메일을 데이터베이스에서 있는지 조회
-  User.findOne({ email: req.body.email }, (err, user)=>{
+  console.log('login...', req.body.id);
+  // 요청된 아이디를 데이터베이스에서 있는지 조회
+  User.findOne({ id: req.body.id }, (err, user)=>{
+    console.log('findOne',user);
     if(err) return res.status(400).send(err);
     if(!user) {
       return res.json({
         loginSuccess: false,
-        message: "제공된 이메일에 해당하는 유저가 없습니다."
+        message: "해당하는 유저가 없습니다."
       })
     }
     // 요청된 이메일이 데이터 베이스에 있다면 비밀번호가 맞는지 확인
     user.comparePassword(req.body.password, (err,isMatch)=>{
+      console.log('isMatch', isMatch);
       if(!isMatch)
       return res.json({loginSuccess: false, message:"비밀번호가 틀렸습니다."})
     })
     // 비밀번호까지 맞다면 토큰 생성
     user.generateToken((err,user) => {
       if(err) return res.status(400).send(err);
+      console.log('token생성?',err, user.token);
 
-      // 토큰을 저장한다. 어디에? 쿠키, 로컬스토리지 ..
-      res.cookie("x_auth", user.token)
+      // 토큰을 저장한다. 어디에? 쿠키, 로컬스토리지 ..(작동 안 됨)
+      res.cookie("x_auth", user.token, {
+        httpOnly: true, maxAge: 900000
+      })
         .status(200)
-        .json({ loginSuccess: true, userId: user._id})
+        .send({ loginSuccess: true, userId: user._id});
+//        .json({ loginSuccess: true, userId: user._id})
+      
     })
   })
 })
@@ -82,15 +88,14 @@ app.post('/api/user/login', (req, res) => {
 
 //Auth Router
 // role ==  0 -> 일반유저 , role != 0 -> 관리자
-app.get('/api/user/auth', auth , (req, res) => {
-
+app.get('/api/user/auth', auth, (req, res) => {
   //여기까지 미들웨어를 통과해 왔다는 얘기는 Authentication이 True라는 뜻
-  req.status(200).json({
+  res.status(200).json({
     _id: req.user._id,
     isAdmin: req.user.role === 0 ? false : true,
     isAuth: true,
-    email: req.user.email,
-    name: req.user.name,
+    id: req.user.id,
+    nickname: req.user.nickname,
     lastname: req.user.lastname,
     role: req.user.role,
     image: req.user.image

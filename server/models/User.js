@@ -6,11 +6,11 @@ const jwt = require('jsonwebtoken');
 const dev = require('../config/dev');
 
 const userSchema = mongoose.Schema({
-    name: {
+    nickname: {
         type: String,
         maxlength: 50
     },
-    email: {
+    id: {
         type: String,
         trim: true,
         unique: 1
@@ -88,7 +88,7 @@ userSchema.statics.findByToken = function(token, cb) {
     jwt.verify(token, dev.jwtToken, function(err, decoded){
         // 유저아이디를 이용해서 유저를 찾은 다음에
         // 클라이언트에서 가져온 token과 DB에 보관된 토큰이 일치하는지 확인
-
+        console.log('찾을 id',decoded, '/',token);
         user.findOne({"_id": decoded, "token": token}, function(err, user){
             if(err) return cb(err);
             cb(null, user);
