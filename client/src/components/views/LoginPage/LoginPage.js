@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useDispatch} from 'react-redux';
 import { loginUser } from '../../../_actions/user_action';
 import {withRouter} from 'react-router-dom';
+import KakaoButton from './KakaoButton';
 
 function LoginPage(props) {
     const dispatch = useDispatch();
@@ -41,11 +42,27 @@ function LoginPage(props) {
         props.history.push('/register');
     }
 
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://developers.kakao.com/sdk/js/kakao.js';
+        script.async = true;
+
+        document.body.appendChild(script);
+        console.log('appendChild');
+        return () => {
+            document.body.removeChild(script);
+            console.log('removeChild');
+        }
+    }, [])
+
     return (
         <div style={{
             display:'flex', justifyContent:'center', alignItems:'center'
             , width:'100%', height:'100vh'
         }}>
+            <div className="layout">
+                <KakaoButton/>
+            </div>
             <form style={{display:'flex', flexDirection:'column'}}
                 onSubmit={onSubmitHandler}
             >
@@ -55,12 +72,14 @@ function LoginPage(props) {
                 <input type="password" value={Password} onChange={onPasswordHandler}/>
 
                 <br/>
+                <br/>
                 <button>
                     로그인
                 </button>
                 <button onClick={onRegisterHandler}>
                     회원가입
                 </button>
+                {/* <script src="https://developers.kakao.com/sdk/js/kakao.js"></script> */}
             </form>
         </div>
     )
